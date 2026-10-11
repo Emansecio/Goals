@@ -28,8 +28,8 @@ enum Theme {
 enum Motion {
     /// Abrir: mola com um leve overshoot.
     static let open = Animation.spring(response: 0.44, dampingFraction: 0.74)
-    /// Fechar: rápido e sem quicar.
-    static let close = Animation.spring(response: 0.3, dampingFraction: 0.95)
+    /// Fechar: imediato e sem quicar.
+    static let close = Animation.spring(response: 0.24, dampingFraction: 1)
     /// Efeito magnético do recolhido quando o mouse se aproxima.
     static let magnet = Animation.spring(response: 0.32, dampingFraction: 0.62)
     /// Troca de dia.

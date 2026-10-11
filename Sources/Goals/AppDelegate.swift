@@ -147,7 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             y: top - size.height,
             width: size.width + flare * 2,
             height: size.height + 4
-        ).insetBy(dx: -14, dy: -14)
+        ).insetBy(dx: -4, dy: -4)
 
         if area.contains(mouse) {
             hub.isPeeking = false
@@ -185,7 +185,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             MainActor.assumeIsolated { self?.close() }
         }
         closeWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06, execute: work)
     }
 
     private func close() {

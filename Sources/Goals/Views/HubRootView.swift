@@ -23,7 +23,7 @@ struct HubRootView: View {
                     .transition(.asymmetric(
                         insertion: .identity,
                         removal: .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
-                            .animation(.easeIn(duration: 0.12))
+                            .animation(.easeIn(duration: 0.07))
                     ))
             } else {
                 // Recolhido: só o contorno, com o progresso de hoje.
@@ -33,7 +33,7 @@ struct HubRootView: View {
                     lineWidth: 2 + bulge * 0.5
                 )
                 .opacity(0.8 + bulge * 0.2)
-                .transition(.opacity.animation(.easeOut(duration: 0.25).delay(0.12)))
+                .transition(.opacity.animation(.easeOut(duration: 0.2).delay(0.06)))
             }
         }
         .frame(width: size.width + flare * 2, height: size.height)
