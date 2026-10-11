@@ -8,11 +8,16 @@ struct TasksCard: View {
     @Namespace private var ns
     @State private var newTitle = ""
     @FocusState private var addFocused: Bool
+    @AppStorage(AppActions.reviewHourKey) private var reviewHour = 21
 
     var body: some View {
         let day = hub.selectedDay
         let isPast = day < hub.today
-        let carry = day == hub.today ? store.pendingCarryOver(today: hub.today) : nil
+        let isToday = day == hub.today
+        let carry = isToday ? store.pendingCarryOver(today: hub.today) : nil
+        let review = isToday && carry == nil ? store.openForReview(today: hub.today, hour: reviewHour) : nil
+        let quick = QuickEntry.parse(newTitle, today: hub.today)
+        let hint = quick.hint(today: hub.today)
         let forward = hub.navDirection > 0
 
         VStack(alignment: .leading, spacing: 6) {
@@ -32,16 +37,34 @@ struct TasksCard: View {
             .padding(.top, 2)
 
             if let carry {
-                CarryBanner(day: carry.day, count: carry.tasks.count, today: hub.today) {
+                let from = Day.distance(from: hub.today, to: carry.day) == -1 ? "ontem" : Day.label(carry.day).lowercased()
+                ActionBanner(
+                    icon: "arrow.uturn.forward.circle.fill",
+                    text: "\(carry.tasks.count) \(carry.tasks.count == 1 ? "pendente" : "pendentes") de \(from)",
+                    action: "Mover p/ hoje",
+                    tint: Theme.orange,
+                    textColor: Color(red: 1, green: 0.8, blue: 0.5)
+                ) {
                     Haptics.tap()
                     withAnimation(Motion.snappy) { store.carry(carry.tasks.map(\.id), to: hub.today) }
                 } onDismiss: {
                     withAnimation(Motion.snappy) { store.dismissCarryOver(carry.day) }
                 }
-                .transition(.asymmetric(
-                    insertion: .move(edge: .top).combined(with: .opacity),
-                    removal: .scale(scale: 0.9, anchor: .top).combined(with: .opacity)
-                ))
+                .transition(Self.bannerTransition)
+            } else if let review {
+                ActionBanner(
+                    icon: "moon.stars.fill",
+                    text: "Fim do dia · \(review.count) \(review.count == 1 ? "aberta" : "abertas")",
+                    action: "Mover p/ amanhã",
+                    tint: Theme.blue,
+                    textColor: Color(red: 0.62, green: 0.78, blue: 1)
+                ) {
+                    Haptics.tap()
+                    withAnimation(Motion.snappy) { store.carry(review.map(\.id), to: Day.offset(hub.today, by: 1)) }
+                } onDismiss: {
+                    withAnimation(Motion.snappy) { store.dismissCarryOver(hub.today) }
+                }
+                .transition(Self.bannerTransition)
             }
 
             // A lista inteira desliza para o lado ao trocar de dia.
@@ -73,9 +96,21 @@ struct TasksCard: View {
                 TextField("Adicionar tarefa", text: $newTitle)
                     .textFieldStyle(.plain)
                     .focused($addFocused)
-                    .onSubmit(add)
+                    .onSubmit { add(quick) }
                     .onExitCommand { addFocused = false }
+                // Prévia do dia/horário entendido no texto ("amanhã 15h" → Amanhã · 15:00).
+                if let hint {
+                    Label(hint, systemImage: "clock")
+                        .font(.system(size: 10.5, weight: .semibold))
+                        .foregroundStyle(Theme.blue)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Theme.blue.opacity(0.16)))
+                        .fixedSize()
+                        .transition(.scale(scale: 0.7, anchor: .trailing).combined(with: .opacity))
+                }
             }
+            .animation(Motion.snappy, value: hint)
             .font(.system(size: 12.5))
             .foregroundStyle(Theme.muted)
             .padding(.horizontal, 10)
@@ -97,10 +132,16 @@ struct TasksCard: View {
         }
     }
 
-    private func add() {
-        let title = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+    private static let bannerTransition = AnyTransition.asymmetric(
+        insertion: .move(edge: .top).combined(with: .opacity),
+        removal: .scale(scale: 0.9, anchor: .top).combined(with: .opacity)
+    )
+
+    private func add(_ entry: QuickEntry) {
+        let title = entry.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
-        withAnimation(Motion.snappy) { _ = store.add(title: title, on: hub.selectedDay) }
+        let time = entry.hour.flatMap { Calendar.current.date(bySettingHour: $0, minute: entry.minute, second: 0, of: Date()) }
+        withAnimation(Motion.snappy) { _ = store.add(title: title, on: entry.day ?? hub.selectedDay, time: time) }
         newTitle = ""
         addFocused = true
     }
@@ -144,6 +185,14 @@ private struct TaskList: View {
                                 },
                                 onEdit: {
                                     withAnimation(Motion.snappy) { hub.editingID = task.id }
+                                },
+                                onPin: {
+                                    Haptics.tap()
+                                    withAnimation(Motion.snappy) { store.togglePin(task.id) }
+                                },
+                                onDropBefore: { dragged in
+                                    Haptics.tap()
+                                    withAnimation(Motion.snappy) { store.reorder(dragged, before: task.id) }
                                 }
                             )
                             .equatable()
@@ -162,37 +211,40 @@ private struct TaskList: View {
     }
 }
 
-private struct CarryBanner: View {
-    let day: String
-    let count: Int
-    let today: String
-    let onMove: () -> Void
+/// Faixa de aviso no topo da lista (pendentes de ontem, revisão do fim do dia).
+private struct ActionBanner: View {
+    let icon: String
+    let text: String
+    let action: String
+    let tint: Color
+    let textColor: Color
+    let onAction: () -> Void
     let onDismiss: () -> Void
 
     var body: some View {
-        let from = Day.distance(from: today, to: day) == -1 ? "ontem" : Day.label(day).lowercased()
         HStack(spacing: 8) {
-            Image(systemName: "arrow.uturn.forward.circle.fill")
-                .symbolEffect(.bounce, options: .nonRepeating, value: count)
-            Text("\(count) \(count == 1 ? "pendente" : "pendentes") de \(from)")
+            Image(systemName: icon)
+                .symbolEffect(.bounce, options: .nonRepeating, value: text)
+            Text(text)
+                .contentTransition(.numericText())
             Spacer()
             Button("Ignorar", action: onDismiss)
                 .buttonStyle(PressableStyle())
                 .foregroundStyle(Theme.muted)
-            Button(action: onMove) {
-                Text("Mover p/ hoje")
+            Button(action: onAction) {
+                Text(action)
                     .fontWeight(.semibold)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Theme.orange.opacity(0.22)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(tint.opacity(0.22)))
             }
             .buttonStyle(PressableStyle())
         }
         .font(.system(size: 11.5))
-        .foregroundStyle(Color(red: 1, green: 0.8, blue: 0.5))
+        .foregroundStyle(textColor)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.orange.opacity(0.12)))
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.12)))
     }
 }
 
@@ -253,8 +305,12 @@ struct TaskRow: View, Equatable {
     let ns: Namespace.ID
     let onToggle: () -> Void
     let onEdit: () -> Void
+    let onPin: () -> Void
+    /// Outra tarefa foi solta em cima desta: vai para antes dela.
+    let onDropBefore: (UUID) -> Void
 
     @State private var hovering = false
+    @State private var dropTargeted = false
 
     // Só redesenha a linha quando a própria tarefa muda.
     static func == (a: TaskRow, b: TaskRow) -> Bool {
@@ -313,6 +369,19 @@ struct TaskRow: View, Equatable {
                 .font(.system(size: 11).monospacedDigit())
                 .foregroundStyle(isLate ? Theme.orange : Theme.muted)
             }
+
+            // Estrela: aparece no hover; fixa a tarefa no topo do dia.
+            Button(action: onPin) {
+                Image(systemName: task.isPinned ? "star.fill" : "star")
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundStyle(task.isPinned ? Theme.orange : Theme.muted)
+                    .symbolEffect(.bounce, options: .nonRepeating, value: task.isPinned)
+                    .frame(width: 14, height: 14)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(PressableStyle())
+            .opacity(task.isPinned || hovering ? 1 : 0)
+            .help(task.isPinned ? "Desafixar" : "Fixar no topo")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -321,10 +390,44 @@ struct TaskRow: View, Equatable {
                 .fill(hovering ? Theme.rowHover : Theme.row)
                 .matchedGeometryEffect(id: task.id, in: ns)
         }
+        // Linha azul indicando onde a tarefa arrastada vai entrar.
+        .overlay(alignment: .top) {
+            Capsule()
+                .fill(Theme.blue)
+                .frame(height: 2.5)
+                .padding(.horizontal, 8)
+                .offset(y: -4.5)
+                .opacity(dropTargeted ? 1 : 0)
+                .scaleEffect(x: dropTargeted ? 1 : 0.4)
+        }
         .scaleEffect(hovering ? 1.01 : 1)
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.16), value: hovering)
+        .animation(Motion.snappy, value: dropTargeted)
         .onTapGesture(perform: onEdit)
+        .draggable(task.id.uuidString) {
+            DragChip(title: task.title)
+        }
+        .dropDestination(for: String.self) { items, _ in
+            guard let id = items.first.flatMap(UUID.init(uuidString:)), id != task.id else { return false }
+            onDropBefore(id)
+            return true
+        } isTargeted: { dropTargeted = $0 }
+    }
+}
+
+/// Prévia compacta da tarefa enquanto é arrastada.
+struct DragChip: View {
+    let title: String
+
+    var body: some View {
+        Label(title, systemImage: "checklist")
+            .font(.system(size: 12, weight: .medium))
+            .lineLimit(1)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(Theme.blue))
     }
 }

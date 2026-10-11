@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var peekWork: DispatchWorkItem?
     private var lastPulseCheck = Date()
     private var carryPromptedDay: String?
+    private var reviewPromptedDay: String?
 
     /// Janela grande só enquanto aberto; recolhida, ela encolhe para economizar memória de vídeo.
     private let openWindowSize = CGSize(width: 820, height: 520)
@@ -30,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let proximityRadius: CGFloat = 70
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UserDefaults.standard.register(defaults: [AppActions.reviewHourKey: 21])
         panel = NotchPanel()
         let hosting = HubHostingView(rootView: HubRootView(hub: hub, store: store))
         hosting.sizingOptions = []
@@ -261,6 +263,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if carryPromptedDay != today, store.pendingCarryOver(today: today) != nil {
             carryPromptedDay = today
             peek(seconds: 6)
+        }
+
+        // Revisão do fim do dia: desce uma vez, no horário escolhido, se ainda houver tarefas abertas.
+        if reviewPromptedDay != today, store.openForReview(today: today, hour: AppActions.reviewHour, now: now) != nil {
+            reviewPromptedDay = today
+            peek(seconds: 10)
         }
     }
 

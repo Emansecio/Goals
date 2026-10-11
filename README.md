@@ -22,11 +22,16 @@ sempre como `Goals.app` (via script), não pelo `swift run`.
 
 - **Hover no notch**: abre. Sair com o mouse: recolhe (exceto enquanto edita).
 - **‹ ›**: dia anterior / próximo. Clicar na data volta para hoje.
-- **Adicionar tarefa**: digite e ⏎.
+- **Adicionar tarefa**: digite e ⏎. Dia e horário no texto são entendidos:
+  "Ligar pro contador amanhã 15h", "Reunião sex 14:30", "Treino às 7h".
 - **Clicar numa tarefa**: edita inline (título, descrição, horário, avisos). ⏎ salva, esc cancela.
+- **Arrastar uma tarefa**: sobre outra, reordena; sobre um dia do calendário, muda de dia.
+- **☆** (aparece no hover): fixa a tarefa no topo.
 - **Avisos** (precisam de horário): Notificação do macOS e/ou Pulso (o hub desce sozinho).
 - **Pendentes**: no dia seguinte aparece "N pendentes de ontem → Mover p/ hoje".
   O dia original continua registrando a tarefa como não feita.
+- **Revisão do fim do dia**: às 21h (ajustável no ⋯) o hub desce se ainda houver tarefas abertas,
+  com "Mover p/ amanhã".
 - **Calendário do mês**: um quadrado por dia (1…N), hoje no seu número. Clique para ir ao dia; ao navegar para outro mês, o calendário acompanha.
 - **⋯** no canto do hub: abrir ao iniciar sessão, mostrar dados, **sair**.
   (O mesmo menu fica no ícone ☑︎ da barra de menus, que pode ficar escondido atrás do notch.)

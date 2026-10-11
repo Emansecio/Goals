@@ -23,6 +23,12 @@ struct GoalTask: Codable, Identifiable, Equatable {
     /// Dia para onde esta tarefa foi copiada como pendente.
     var carriedTo: String?
     var createdAt = Date()
+    /// Fixada no topo do dia. Opcionais para ler arquivos antigos sem esses campos.
+    var pinned: Bool?
+    /// Ordem manual (definida ao arrastar). `nil` = ordem automática por horário.
+    var rank: Double?
+
+    var isPinned: Bool { pinned ?? false }
 
     var alertDate: Date? {
         guard let time, alert.isOn else { return nil }

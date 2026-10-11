@@ -6,6 +6,10 @@ import ServiceManagement
 enum AppActions {
     static var opensAtLogin: Bool { SMAppService.mainApp.status == .enabled }
 
+    /// Hora da revisão do fim do dia (0 = desligada). Padrão: 21h.
+    static let reviewHourKey = "reviewHour"
+    static var reviewHour: Int { UserDefaults.standard.integer(forKey: reviewHourKey) }
+
     static func toggleOpenAtLogin() {
         do {
             if opensAtLogin {

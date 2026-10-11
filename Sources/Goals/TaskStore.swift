@@ -98,9 +98,20 @@ final class TaskStore: ObservableObject {
 
     // MARK: Escrita
 
+    func task(_ id: UUID) -> GoalTask? { tasks.first { $0.id == id } }
+
+    /// Tarefas de hoje ainda abertas, depois do horário da revisão do fim do dia.
+    func openForReview(today: String, hour: Int, now: Date = Date()) -> [GoalTask]? {
+        guard hour > 0, Calendar.current.component(.hour, from: now) >= hour,
+              !dismissedCarryOver.contains(today) else { return nil }
+        let open = tasks(on: today).filter { !$0.isDone && $0.carriedTo == nil }
+        return open.isEmpty ? nil : open
+    }
+
     @discardableResult
-    func add(title: String, on day: String) -> GoalTask {
-        let task = GoalTask(day: day, title: title)
+    func add(title: String, on day: String, time: Date? = nil) -> GoalTask {
+        var task = GoalTask(day: day, title: title)
+        task.time = time.map { Day.combine(day, time: $0) }
         tasks.append(task)
         persist()
         return task
@@ -128,6 +139,7 @@ final class TaskStore: ObservableObject {
         guard let i = tasks.firstIndex(where: { $0.id == id }) else { return }
         var task = tasks[i]
         task.day = day
+        task.rank = nil
         if let t = task.time { task.time = Day.combine(day, time: t) }
         tasks[i] = task
         persist()
@@ -145,9 +157,36 @@ final class TaskStore: ObservableObject {
             copy.carriedFrom = updated[i].day
             copy.carriedTo = nil
             copy.createdAt = Date()
+            copy.rank = nil
+            copy.pinned = nil
             if let t = copy.time { copy.time = Day.combine(day, time: t) }
             updated[i].carriedTo = day
             updated.append(copy)
+        }
+        tasks = updated
+        persist()
+    }
+
+    func togglePin(_ id: UUID) {
+        guard let i = tasks.firstIndex(where: { $0.id == id }) else { return }
+        tasks[i].pinned = tasks[i].isPinned ? nil : true
+        persist()
+    }
+
+    /// Coloca `id` logo antes de `target` no mesmo dia e grava a ordem manual.
+    func reorder(_ id: UUID, before target: UUID) {
+        guard id != target, let moving = task(id), let anchor = task(target), moving.day == anchor.day else { return }
+        var list = tasks(on: anchor.day).filter { $0.id != id }
+        guard let index = list.firstIndex(where: { $0.id == target }) else { return }
+        list.insert(moving, at: index)
+        var ranks: [UUID: Double] = [:]
+        for (i, t) in list.enumerated() { ranks[t.id] = Double(i) }
+        var updated = tasks
+        for i in updated.indices {
+            guard let rank = ranks[updated[i].id] else { continue }
+            updated[i].rank = rank
+            // Soltar entre as fixadas fixa; entre as normais, desafixa.
+            if updated[i].id == id { updated[i].pinned = anchor.pinned }
         }
         tasks = updated
         persist()
@@ -173,7 +212,15 @@ final class TaskStore: ObservableObject {
         streakMemo = nil
     }
 
+    /// Fixadas primeiro; depois a ordem manual; o resto por horário e criação.
     private static func order(_ a: GoalTask, _ b: GoalTask) -> Bool {
+        if a.isPinned != b.isPinned { return a.isPinned }
+        switch (a.rank, b.rank) {
+        case let (x?, y?) where x != y: return x < y
+        case (_?, nil): return true
+        case (nil, _?): return false
+        default: break
+        }
         switch (a.time, b.time) {
         case let (x?, y?): return x < y
         case (_?, nil): return true

@@ -11,6 +11,8 @@ struct StreakCard: View {
     let streak: Int
     let appeared: Bool
     let onSelect: (String) -> Void
+    /// Tarefa arrastada e solta num dia.
+    let onDropTask: (UUID, String) -> Void
 
     @Namespace private var ringSpace
     private static let columnCount = 8
@@ -47,7 +49,8 @@ struct StreakCard: View {
                         isToday: day == today,
                         isFuture: day > today,
                         ringSpace: ringSpace,
-                        onSelect: { onSelect(day) }
+                        onSelect: { onSelect(day) },
+                        onDropTask: { onDropTask($0, day) }
                     )
                     // Onda diagonal ao abrir.
                     .scaleEffect(appeared ? 1 : 0.5)
@@ -93,8 +96,10 @@ private struct DayCell: View {
     let isFuture: Bool
     let ringSpace: Namespace.ID
     let onSelect: () -> Void
+    let onDropTask: (UUID) -> Void
 
     @State private var hovering = false
+    @State private var dropTargeted = false
 
     var body: some View {
         RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -121,13 +126,29 @@ private struct DayCell: View {
                         .matchedGeometryEffect(id: "ring", in: ringSpace)
                 }
             }
-            .scaleEffect(hovering ? 1.15 : 1)
-            .zIndex(hovering ? 1 : 0)
+            .overlay {
+                // Destino de uma tarefa arrastada.
+                if dropTargeted {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Theme.blue, lineWidth: 2)
+                        .padding(-2.5)
+                        .shadow(color: Theme.blue.opacity(0.8), radius: 6)
+                        .transition(.opacity)
+                }
+            }
+            .scaleEffect(dropTargeted ? 1.28 : hovering ? 1.15 : 1)
+            .zIndex(hovering || dropTargeted ? 1 : 0)
             .animation(.spring(response: 0.25, dampingFraction: 0.6), value: hovering)
+            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: dropTargeted)
             .animation(.easeInOut(duration: 0.35), value: level)
             .contentShape(Rectangle())
             .onHover { hovering = $0 }
             .onTapGesture(perform: onSelect)
+            .dropDestination(for: String.self) { items, _ in
+                guard let id = items.first.flatMap(UUID.init(uuidString:)) else { return false }
+                onDropTask(id)
+                return true
+            } isTargeted: { dropTargeted = $0 }
     }
 
     private var numberColor: Color {

@@ -88,7 +88,8 @@ struct ExpandedView: View {
                         selected: hub.selectedDay,
                         streak: store.streak(today: hub.today),
                         appeared: appeared,
-                        onSelect: { day in withAnimation(Motion.nav) { hub.select(day) } }
+                        onSelect: { day in withAnimation(Motion.nav) { hub.select(day) } },
+                        onDropTask: moveTask
                     )
                     .frame(width: 250)
                     .reveal(appeared, delay: 0.04, blur: 0)
@@ -105,6 +106,22 @@ struct ExpandedView: View {
             guard old.day == new.day, new.total > 0, new.done == new.total, old.done < new.done else { return }
             hub.glow += 1
             Haptics.success()
+        }
+    }
+}
+
+extension ExpandedView {
+    /// Tarefa solta num dia do calendário. Pendente de um dia passado vira cópia
+    /// (o histórico continua dizendo "não feita"); o resto só muda de dia.
+    func moveTask(_ id: UUID, to day: String) {
+        guard let task = store.task(id), task.day != day else { return }
+        Haptics.success()
+        withAnimation(Motion.snappy) {
+            if task.day < hub.today && day >= hub.today && !task.isDone {
+                store.carry([id], to: day)
+            } else {
+                store.move(id, to: day)
+            }
         }
     }
 }
@@ -210,6 +227,7 @@ private struct NavArrow: View {
 private struct OptionsMenu: View {
     @State private var opensAtLogin = AppActions.opensAtLogin
     @State private var hovering = false
+    @AppStorage(AppActions.reviewHourKey) private var reviewHour = 21
 
     var body: some View {
         Menu {
@@ -222,6 +240,10 @@ private struct OptionsMenu: View {
                 } else {
                     Text("Abrir ao iniciar sessão")
                 }
+            }
+            Picker("Revisão do fim do dia", selection: $reviewHour) {
+                Text("Desligada").tag(0)
+                ForEach([19, 20, 21, 22, 23], id: \.self) { Text("\($0)h").tag($0) }
             }
             Button("Mostrar dados no Finder") { AppActions.revealData() }
             Divider()
