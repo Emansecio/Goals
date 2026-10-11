@@ -4,9 +4,6 @@ import CoreGraphics
 /// Estado da interface do hub, compartilhado entre o AppDelegate e as views.
 @MainActor
 final class HubController: ObservableObject {
-    /// Calendário visível ao lado das tarefas (lembrado entre aberturas).
-    static let showCalendarKey = "showCalendar"
-
     @Published var isOpen = false
     @Published var today = Day.today
     @Published var selectedDay = Day.today
@@ -18,6 +15,15 @@ final class HubController: ObservableObject {
     @Published var proximity: CGFloat = 0
     /// Incrementa para disparar o brilho da borda (pulso, dia completo).
     @Published var glow = 0
+    /// Calendário visível ao lado das tarefas; escondido, o hub encolhe. Lembrado entre aberturas.
+    @Published var showCalendar = UserDefaults.standard.object(forKey: "showCalendar") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(showCalendar, forKey: "showCalendar")
+            // O botão fica na borda: ao encolher, o mouse sai do hub. Não fecha até ele voltar.
+            keepWide = !showCalendar
+        }
+    }
+    var keepWide = false
 
     /// Direção da última navegação entre dias (-1 passado, +1 futuro), para a animação.
     private(set) var navDirection = 1
@@ -27,11 +33,13 @@ final class HubController: ObservableObject {
     var isEditing: Bool { editingID != nil || isTyping }
 
     static let openWidth: CGFloat = 680
+    /// Sem o calendário (250) e o espaço entre os cards (14).
+    static let compactWidth: CGFloat = 416
     static let openTopRadius: CGFloat = 14
     static let closedTopRadius: CGFloat = 6
 
     var openSize: CGSize {
-        CGSize(width: Self.openWidth, height: editingID != nil ? 430 : 360)
+        CGSize(width: showCalendar ? Self.openWidth : Self.compactWidth, height: editingID != nil ? 430 : 360)
     }
 
     var collapsedSize: CGSize {

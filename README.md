@@ -33,7 +33,7 @@ sempre como `Goals.app` (via script), não pelo `swift run`.
 - **Revisão do fim do dia**: às 21h (ajustável no ⋯) o hub desce se ainda houver tarefas abertas,
   com "Mover p/ amanhã".
 - **Calendário do mês**: um quadrado por dia (1…N), hoje no seu número. Clique para ir ao dia; ao navegar para outro mês, o calendário acompanha.
-- **Ícone de calendário** no topo: mostra ou esconde o calendário; escondido, as tarefas ocupam a largura toda.
+- **Ícone de calendário** no topo: mostra ou esconde o calendário; escondido, o hub encolhe.
 - **⋯** no canto do hub: abrir ao iniciar sessão, mostrar dados, **sair**.
   (O mesmo menu fica no ícone ☑︎ da barra de menus, que pode ficar escondido atrás do notch.)
 - Clicar no ícone do Dock, ou abrir o app de novo, mostra o hub.

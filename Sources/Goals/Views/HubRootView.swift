@@ -47,8 +47,6 @@ struct ExpandedView: View {
     @ObservedObject var store: TaskStore
 
     @State private var appeared = false
-    @AppStorage(HubController.showCalendarKey) private var showCalendar = true
-
     private struct DayProgress: Equatable {
         var day: String
         var done: Int
@@ -80,7 +78,7 @@ struct ExpandedView: View {
                     TasksCard(hub: hub, store: store, appeared: appeared)
                         .frame(maxWidth: .infinity)
                         .reveal(appeared, delay: 0.02, blur: 0)
-                    if showCalendar {
+                    if hub.showCalendar {
                         let monthDays = hub.monthDays
                         StreakCard(
                             title: Day.monthTitle(hub.selectedDay, today: hub.today),
@@ -95,11 +93,10 @@ struct ExpandedView: View {
                         )
                         .frame(width: 250)
                         .reveal(appeared, delay: 0.04, blur: 0)
-                        // Recolher o calendário: ele sai pela direita e as tarefas ganham a largura.
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        // Some junto com a borda direita do hub, que encolhe.
+                        .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .trailing)))
                     }
                 }
-                .animation(Motion.snappy, value: showCalendar)
                 .padding(.horizontal, 19)
                 .padding(.top, 8)
                 .padding(.bottom, 19)
@@ -135,7 +132,6 @@ extension ExpandedView {
 private struct TopBar: View {
     @ObservedObject var hub: HubController
     var progress: (done: Int, total: Int)
-    @AppStorage(HubController.showCalendarKey) private var showCalendar = true
 
     var body: some View {
         let day = hub.selectedDay
@@ -195,8 +191,10 @@ private struct TopBar: View {
             .animation(Motion.snappy, value: progress.done)
             .animation(Motion.snappy, value: progress.total)
 
-            NavArrow(symbol: "calendar", isOn: showCalendar) { showCalendar.toggle() }
-                .help(showCalendar ? "Esconder calendário" : "Mostrar calendário")
+            NavArrow(symbol: "calendar", isOn: hub.showCalendar) {
+                withAnimation(Motion.open) { hub.showCalendar.toggle() }
+            }
+            .help(hub.showCalendar ? "Esconder calendário" : "Mostrar calendário")
             OptionsMenu()
         }
         .monospacedDigit()

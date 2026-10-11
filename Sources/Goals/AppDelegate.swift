@@ -151,8 +151,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             width: size.width + flare * 2,
             height: size.height + 4
         ).insetBy(dx: -4, dy: -4)
+        if hub.keepWide, area.insetBy(dx: (size.width - HubController.openWidth) / 2, dy: 0).contains(mouse) { return }
 
         if area.contains(mouse) {
+            hub.keepWide = false
             hub.isPeeking = false
             closeWork?.cancel()
             closeWork = nil
@@ -194,6 +196,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func close() {
         closeWork = nil
         hub.isPeeking = false
+        hub.keepWide = false
         panel.ignoresMouseEvents = true
         withAnimation(Motion.close) {
             hub.editingID = nil
