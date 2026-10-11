@@ -1,0 +1,67 @@
+# Goals
+
+Hub de tarefas diárias no notch do MacBook. Fica recolhido como um contorno fino
+em volta do notch; ao passar o mouse na borda de cima, o painel desce com as
+tarefas do dia e o grid de sequência.
+
+## Rodar
+
+```bash
+./scripts/build-app.sh            # gera build/Goals.app
+open build/Goals.app
+./scripts/build-app.sh --install  # copia para /Applications (recomendado p/ "abrir ao iniciar sessão")
+```
+
+Para abrir no Xcode: `open Package.swift`. Para notificações funcionarem, rode
+sempre como `Goals.app` (via script), não pelo `swift run`.
+
+## Uso
+
+- **Hover no notch**: abre. Sair com o mouse: recolhe (exceto enquanto edita).
+- **‹ ›**: dia anterior / próximo. Clicar na data volta para hoje.
+- **Adicionar tarefa**: digite e ⏎.
+- **Clicar numa tarefa**: edita inline (título, descrição, horário, avisos). ⏎ salva, esc cancela.
+- **Avisos** (precisam de horário): Notificação do macOS e/ou Pulso (o hub desce sozinho).
+- **Pendentes**: no dia seguinte aparece "N pendentes de ontem → Mover p/ hoje".
+  O dia original continua registrando a tarefa como não feita.
+- **Sequência**: últimos 48 dias. Clique num quadrado para ir ao dia.
+- Ícone ☑︎ na barra de menus: mostrar hub, abrir ao iniciar sessão, dados, sair.
+
+Dados: `~/Library/Application Support/Goals/tasks.json`.
+
+## Animações
+
+As curvas ficam em `Motion` (`Views/Theme.swift`). Ajuste `response` para deixar mais
+rápido ou mais lento e `dampingFraction` para mais ou menos "quique".
+
+- Notch magnético: cresce conforme o mouse se aproxima.
+- Abertura em cascata: barra do topo → cards → linhas → grid em onda → linha em U.
+- Check: círculo enche com mola, ✓ desenhado, onda e risco que corre pelo título.
+- Linha ↔ editor com morph do fundo; troca de dia desliza na direção navegada.
+- Contadores com dígitos animados; brilho na borda ao completar o dia ou no pulso.
+
+## Desempenho
+
+- Mouse via eventos (sem polling): 0% de CPU e nenhuma ativação com o mouse parado.
+- Janela pequena quando recolhida; grande só enquanto aberta.
+- Índice por dia em cache (progresso/níveis em O(1)), sequência memorizada.
+- Linhas e grid recebem valores (só redesenham o que mudou).
+- Salvamento agrupado (0,4 s) e gravado fora da thread principal.
+- Sem animações em loop infinito: nada roda em segundo plano.
+
+## Estrutura
+
+```
+Sources/Goals/
+  main.swift, AppDelegate.swift   ciclo de vida, hover, pulso, barra de menus
+  NotchPanel.swift                janela sobre o notch + geometria
+  HubController.swift             estado da UI (aberto, dia, edição)
+  TaskStore.swift, Models.swift   dados e persistência JSON
+  Reminders.swift                 notificações
+  Views/                          SwiftUI (hub, tarefas, editor, sequência)
+scripts/                          build-app.sh (empacota/instala), make-icon.swift (ícone)
+```
+
+## Próximos passos (fora da v1)
+
+Tarefas recorrentes · timer de foco · monitor externo · sync via iCloud.
