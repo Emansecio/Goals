@@ -33,13 +33,14 @@ final class HubController: ObservableObject {
     var isEditing: Bool { editingID != nil || isTyping }
 
     static let openWidth: CGFloat = 680
-    /// Sem o calendário (250) e o espaço entre os cards (14).
-    static let compactWidth: CGFloat = 416
+    /// Sem o calendário: o notch no meio e, de cada lado, espaço só para a data / o contador.
+    var compactWidth: CGFloat { notch.width + 2 * Self.topBarSide }
+    static let topBarSide: CGFloat = 182
     static let openTopRadius: CGFloat = 14
     static let closedTopRadius: CGFloat = 6
 
     var openSize: CGSize {
-        CGSize(width: showCalendar ? Self.openWidth : Self.compactWidth, height: editingID != nil ? 430 : 360)
+        CGSize(width: showCalendar ? Self.openWidth : compactWidth, height: editingID != nil ? 430 : 360)
     }
 
     var collapsedSize: CGSize {

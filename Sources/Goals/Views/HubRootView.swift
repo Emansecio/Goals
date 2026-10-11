@@ -137,65 +137,74 @@ private struct TopBar: View {
         let day = hub.selectedDay
         let edge: Edge = hub.navDirection > 0 ? .trailing : .leading
 
-        HStack(spacing: 6) {
-            navButton("chevron.left") { go(Day.offset(day, by: -1)) }
+        HStack(spacing: 0) {
+            HStack(spacing: 6) {
+                navButton("chevron.left") { go(Day.offset(day, by: -1)) }
 
-            Button { go(hub.today) } label: {
-                // Largura fixa + corte: a data antiga sai deslizando sem invadir a barra de menus.
-                ZStack(alignment: .leading) {
-                    Text(Day.label(day))
-                        .font(.system(size: 13, weight: .semibold))
-                        .fixedSize()
-                        .id(day)
-                        .transition(.push(from: edge))
+                Button { go(hub.today) } label: {
+                    // Largura fixa + corte: a data antiga sai deslizando sem invadir a barra de menus.
+                    ZStack(alignment: .leading) {
+                        Text(Day.label(day))
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(!hub.showCalendar && day == hub.today ? Theme.blue : .white)
+                            .fixedSize()
+                            .id(day)
+                            .transition(.push(from: edge))
+                    }
+                    .frame(width: 92, height: 22, alignment: .leading)
+                    .clipped()
+                    .contentShape(Rectangle())
                 }
-                .frame(width: 92, height: 22, alignment: .leading)
-                .clipped()
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(PressableStyle())
-            .help("Voltar para hoje")
+                .buttonStyle(PressableStyle())
+                .help("Voltar para hoje")
 
-            if let rel = Day.relative(day, today: hub.today) {
-                Text(rel)
-                    .font(.system(size: 9.5, weight: .bold))
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .foregroundStyle(day == hub.today ? Theme.blue : Theme.muted)
-                    .background(
-                        RoundedRectangle(cornerRadius: 5)
-                            .fill(day == hub.today ? Theme.blue.opacity(0.18) : Color(white: 0.15))
-                    )
-                    .id(rel)
-                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+                // Compacto não tem espaço para o selo; a data fica azul quando é hoje.
+                if hub.showCalendar, let rel = Day.relative(day, today: hub.today) {
+                    Text(rel)
+                        .font(.system(size: 9.5, weight: .bold))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .foregroundStyle(day == hub.today ? Theme.blue : Theme.muted)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(day == hub.today ? Theme.blue.opacity(0.18) : Color(white: 0.15))
+                        )
+                        .id(rel)
+                        .transition(.scale(scale: 0.6).combined(with: .opacity))
+                }
+                navButton("chevron.right") { go(Day.offset(day, by: 1)) }
             }
-            navButton("chevron.right") { go(Day.offset(day, by: 1)) }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Spacer()
+            // O meio da barra fica atrás da câmera: nada é desenhado ali.
+            Color.clear.frame(width: hub.notch.width + 12)
 
-            HStack(spacing: 0) {
-                Text("\(progress.done)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .contentTransition(.numericText(value: Double(progress.done)))
-                Text(" / ")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.muted)
-                Text("\(progress.total)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.muted)
-                    .contentTransition(.numericText(value: Double(progress.total)))
-                Text(" feitas")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.muted)
+            HStack(spacing: 6) {
+                HStack(spacing: 0) {
+                    Text("\(progress.done)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .contentTransition(.numericText(value: Double(progress.done)))
+                    Text(" / ")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.muted)
+                    Text("\(progress.total)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.muted)
+                        .contentTransition(.numericText(value: Double(progress.total)))
+                    Text(" feitas")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.muted)
+                }
+                .animation(Motion.snappy, value: progress.done)
+                .animation(Motion.snappy, value: progress.total)
+
+                NavArrow(symbol: "calendar", isOn: hub.showCalendar) {
+                    withAnimation(Motion.open) { hub.showCalendar.toggle() }
+                }
+                .help(hub.showCalendar ? "Esconder calendário" : "Mostrar calendário")
+                OptionsMenu()
             }
-            .animation(Motion.snappy, value: progress.done)
-            .animation(Motion.snappy, value: progress.total)
-
-            NavArrow(symbol: "calendar", isOn: hub.showCalendar) {
-                withAnimation(Motion.open) { hub.showCalendar.toggle() }
-            }
-            .help(hub.showCalendar ? "Esconder calendário" : "Mostrar calendário")
-            OptionsMenu()
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .monospacedDigit()
         .padding(.horizontal, 21)
