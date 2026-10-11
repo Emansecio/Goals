@@ -168,6 +168,8 @@ private struct TopBar: View {
             }
             .animation(Motion.snappy, value: progress.done)
             .animation(Motion.snappy, value: progress.total)
+
+            OptionsMenu()
         }
         .monospacedDigit()
         .padding(.horizontal, 26)
@@ -199,5 +201,43 @@ private struct NavArrow: View {
         .foregroundStyle(hovering ? Color.white : Theme.muted)
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.15), value: hovering)
+    }
+}
+
+/// Menu "⋯" no canto do hub: início automático, dados e sair.
+private struct OptionsMenu: View {
+    @State private var opensAtLogin = AppActions.opensAtLogin
+    @State private var hovering = false
+
+    var body: some View {
+        Menu {
+            Button {
+                AppActions.toggleOpenAtLogin()
+                opensAtLogin = AppActions.opensAtLogin
+            } label: {
+                if opensAtLogin {
+                    Label("Abrir ao iniciar sessão", systemImage: "checkmark")
+                } else {
+                    Text("Abrir ao iniciar sessão")
+                }
+            }
+            Button("Mostrar dados no Finder") { AppActions.revealData() }
+            Divider()
+            Button("Sair do Goals") { AppActions.quit() }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 12, weight: .bold))
+                .frame(width: 22, height: 22)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color(white: hovering ? 0.14 : 0)))
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .foregroundStyle(hovering ? Color.white : Theme.muted)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: hovering)
+        .help("Opções")
+        .onAppear { opensAtLogin = AppActions.opensAtLogin }
     }
 }

@@ -1,6 +1,5 @@
 import AppKit
 import Combine
-import ServiceManagement
 import SwiftUI
 
 @MainActor
@@ -81,6 +80,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             MainActor.assumeIsolated { self?.tick() }
         }
+    }
+
+    /// Clicar no ícone do Dock (ou abrir o app de novo) mostra o hub.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        peek(seconds: 4)
+        return false
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -278,28 +283,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     nonisolated func menuNeedsUpdate(_ menu: NSMenu) {
         MainActor.assumeIsolated {
-            loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
+            loginItem.state = AppActions.opensAtLogin ? .on : .off
         }
     }
 
     @objc private func showHub() { peek(seconds: 4) }
-
-    @objc private func toggleLogin() {
-        do {
-            if SMAppService.mainApp.status == .enabled {
-                try SMAppService.mainApp.unregister()
-            } else {
-                try SMAppService.mainApp.register()
-            }
-        } catch {
-            let alert = NSAlert()
-            alert.messageText = "Não foi possível alterar o início automático"
-            alert.informativeText = "\(error.localizedDescription)\n\nDica: instale com ./scripts/build-app.sh --install e abra pelo /Applications."
-            alert.runModal()
-        }
-    }
-
-    @objc private func revealData() {
-        NSWorkspace.shared.activateFileViewerSelecting([store.folderURL])
-    }
+    @objc private func toggleLogin() { AppActions.toggleOpenAtLogin() }
+    @objc private func revealData() { AppActions.revealData() }
 }

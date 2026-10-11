@@ -33,9 +33,13 @@ final class TaskStore: ObservableObject {
         var dismissedCarryOver: [String]
     }
 
+    static var defaultFolder: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Goals", isDirectory: true)
+    }
+
     init() {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        folderURL = support.appendingPathComponent("Goals", isDirectory: true)
+        folderURL = Self.defaultFolder
         fileURL = folderURL.appendingPathComponent("tasks.json")
         try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
         load()

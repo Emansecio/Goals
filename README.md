@@ -12,6 +12,9 @@ open build/Goals.app
 ./scripts/build-app.sh --install  # copia para /Applications (recomendado p/ "abrir ao iniciar sessão")
 ```
 
+Para colocar no Dock, arraste `/Applications/Goals.app` até ele.
+O ícone é gerado por `swift scripts/make-icon.swift` (cria `Resources/AppIcon.icns`).
+
 Para abrir no Xcode: `open Package.swift`. Para notificações funcionarem, rode
 sempre como `Goals.app` (via script), não pelo `swift run`.
 
@@ -25,7 +28,9 @@ sempre como `Goals.app` (via script), não pelo `swift run`.
 - **Pendentes**: no dia seguinte aparece "N pendentes de ontem → Mover p/ hoje".
   O dia original continua registrando a tarefa como não feita.
 - **Sequência**: últimos 48 dias. Clique num quadrado para ir ao dia.
-- Ícone ☑︎ na barra de menus: mostrar hub, abrir ao iniciar sessão, dados, sair.
+- **⋯** no canto do hub: abrir ao iniciar sessão, mostrar dados, **sair**.
+  (O mesmo menu fica no ícone ☑︎ da barra de menus, que pode ficar escondido atrás do notch.)
+- Clicar no ícone do Dock, ou abrir o app de novo, mostra o hub.
 
 Dados: `~/Library/Application Support/Goals/tasks.json`.
 
