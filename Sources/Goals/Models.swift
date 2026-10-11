@@ -84,6 +84,30 @@ enum Day {
         return s.prefix(1).uppercased() + s.dropFirst()
     }
 
+    /// "yyyy-MM" do dia.
+    static func month(_ key: String) -> String { String(key.prefix(7)) }
+
+    /// Todos os dias do mês de `key`, do dia 1 ao último.
+    static func daysInMonth(of key: String) -> [String] {
+        let count = Calendar.current.range(of: .day, in: .month, for: date(key))?.count ?? 30
+        let prefix = month(key)
+        return (1...count).map { prefix + "-" + ($0 < 10 ? "0\($0)" : "\($0)") }
+    }
+
+    /// "Outubro" (com o ano quando não é o ano atual: "Outubro 2025").
+    static func monthTitle(_ key: String, today: String) -> String {
+        let name = monthFormatter.string(from: date(key))
+        let title = name.prefix(1).uppercased() + name.dropFirst()
+        return key.prefix(4) == today.prefix(4) ? title : "\(title) \(key.prefix(4))"
+    }
+
+    private static let monthFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "pt_BR")
+        f.dateFormat = "LLLL"
+        return f
+    }()
+
     static func relative(_ key: String, today: String) -> String? {
         switch distance(from: today, to: key) {
         case 0: "HOJE"

@@ -4,13 +4,8 @@ import CoreGraphics
 /// Estado da interface do hub, compartilhado entre o AppDelegate e as views.
 @MainActor
 final class HubController: ObservableObject {
-    static let streakDays = 48
-
     @Published var isOpen = false
-    @Published var today = Day.today {
-        didSet { if today != oldValue { recentDays = Self.days(endingAt: today) } }
-    }
-    @Published private(set) var recentDays = HubController.days(endingAt: Day.today)
+    @Published var today = Day.today
     @Published var selectedDay = Day.today
     @Published var editingID: UUID?
     /// Campo "Adicionar tarefa" com foco.
@@ -47,7 +42,13 @@ final class HubController: ObservableObject {
         selectedDay = day
     }
 
-    private static func days(endingAt today: String) -> [String] {
-        (0..<streakDays).reversed().map { Day.offset(today, by: -$0) }
+    /// Dias do mês do dia selecionado (1…N), recalculados só quando o mês muda.
+    var monthDays: [String] {
+        let month = Day.month(selectedDay)
+        if let cache = monthCache, cache.month == month { return cache.days }
+        let days = Day.daysInMonth(of: selectedDay)
+        monthCache = (month, days)
+        return days
     }
+    private var monthCache: (month: String, days: [String])?
 }

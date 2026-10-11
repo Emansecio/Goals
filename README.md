@@ -27,7 +27,7 @@ sempre como `Goals.app` (via script), não pelo `swift run`.
 - **Avisos** (precisam de horário): Notificação do macOS e/ou Pulso (o hub desce sozinho).
 - **Pendentes**: no dia seguinte aparece "N pendentes de ontem → Mover p/ hoje".
   O dia original continua registrando a tarefa como não feita.
-- **Sequência**: últimos 48 dias. Clique num quadrado para ir ao dia.
+- **Calendário do mês**: um quadrado por dia (1…N), hoje no seu número. Clique para ir ao dia; ao navegar para outro mês, o calendário acompanha.
 - **⋯** no canto do hub: abrir ao iniciar sessão, mostrar dados, **sair**.
   (O mesmo menu fica no ícone ☑︎ da barra de menus, que pode ficar escondido atrás do notch.)
 - Clicar no ícone do Dock, ou abrir o app de novo, mostra o hub.

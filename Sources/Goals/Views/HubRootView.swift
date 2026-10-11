@@ -67,21 +67,23 @@ struct ExpandedView: View {
                 lineWidth: 3,
                 glow: hub.glow
             )
-            .animation(Motion.fill.delay(appeared ? 0 : 0.1), value: fraction)
-            .animation(Motion.fill.delay(0.15), value: appeared)
+            .animation(Motion.fill, value: fraction)
+            .animation(Motion.fill.delay(0.05), value: appeared)
 
             VStack(spacing: 0) {
                 TopBar(hub: hub, progress: progress)
                     .frame(height: hub.notch.height)
-                    .reveal(appeared, delay: 0.03, offset: -6, blur: 3)
+                    .reveal(appeared, delay: 0, offset: -4, blur: 0)
 
                 HStack(alignment: .top, spacing: 14) {
                     TasksCard(hub: hub, store: store, appeared: appeared)
                         .frame(maxWidth: .infinity)
-                        .reveal(appeared, delay: 0.06)
+                        .reveal(appeared, delay: 0.02, blur: 0)
+                    let monthDays = hub.monthDays
                     StreakCard(
-                        days: hub.recentDays,
-                        levels: hub.recentDays.map(store.level(on:)),
+                        title: Day.monthTitle(hub.selectedDay, today: hub.today),
+                        days: monthDays,
+                        levels: monthDays.map(store.level(on:)),
                         today: hub.today,
                         selected: hub.selectedDay,
                         streak: store.streak(today: hub.today),
@@ -89,7 +91,7 @@ struct ExpandedView: View {
                         onSelect: { day in withAnimation(Motion.nav) { hub.select(day) } }
                     )
                     .frame(width: 250)
-                    .reveal(appeared, delay: 0.1)
+                    .reveal(appeared, delay: 0.04, blur: 0)
                 }
                 .padding(.horizontal, 26)
                 .padding(.top, 8)

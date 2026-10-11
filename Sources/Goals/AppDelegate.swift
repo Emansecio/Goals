@@ -132,7 +132,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let notch = hub.notch
             let dx = max(0, abs(mouse.x - centerX) - notch.width / 2)
             let dy = max(0, (top - notch.height) - mouse.y)
-            if dx <= 10 && dy <= 2 { return open() }
+            // Abre ao encostar no notch ou logo abaixo dele (área um pouco maior = resposta imediata).
+            if dx <= 16 && dy <= 8 { return open() }
 
             let distance = hypot(dx, dy)
             let raw = max(0, 1 - distance / proximityRadius)

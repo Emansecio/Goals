@@ -27,7 +27,7 @@ enum Theme {
 /// Curvas de animação usadas no app, num lugar só para manter o "feel" consistente.
 enum Motion {
     /// Abrir: mola com um leve overshoot.
-    static let open = Animation.spring(response: 0.44, dampingFraction: 0.74)
+    static let open = Animation.spring(response: 0.34, dampingFraction: 0.78)
     /// Fechar: imediato e sem quicar.
     static let close = Animation.spring(response: 0.24, dampingFraction: 1)
     /// Efeito magnético do recolhido quando o mouse se aproxima.
@@ -37,7 +37,7 @@ enum Motion {
     /// Interações pequenas (check, inserir, editar).
     static let snappy = Animation.spring(response: 0.3, dampingFraction: 0.78)
     /// Progresso enchendo.
-    static let fill = Animation.spring(response: 0.7, dampingFraction: 0.86)
+    static let fill = Animation.spring(response: 0.5, dampingFraction: 0.88)
 }
 
 enum Haptics {
@@ -59,12 +59,16 @@ struct Reveal: ViewModifier {
     var blur: CGFloat = 6
 
     func body(content: Content) -> some View {
-        content
+        let moved = content
             .opacity(shown ? 1 : 0)
             .offset(y: shown ? 0 : offset)
             .scaleEffect(shown ? 1 : 0.97, anchor: .top)
-            .blur(radius: shown ? 0 : blur)
-            .animation(Motion.open.delay(delay), value: shown)
+        // Desfoque é caro de animar: só entra quando pedido.
+        if blur > 0 {
+            moved.blur(radius: shown ? 0 : blur).animation(Motion.open.delay(delay), value: shown)
+        } else {
+            moved.animation(Motion.open.delay(delay), value: shown)
+        }
     }
 }
 

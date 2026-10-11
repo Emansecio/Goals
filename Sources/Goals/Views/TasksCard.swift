@@ -85,7 +85,7 @@ struct TasksCard: View {
                     .fill(Color.white.opacity(addFocused ? 0.06 : 0))
             )
             .animation(Motion.snappy, value: addFocused)
-            .reveal(appeared, delay: 0.16, offset: -4, blur: 2)
+            .reveal(appeared, delay: 0.06, offset: -4, blur: 0)
         }
         .padding(12)
         .frame(maxHeight: .infinity, alignment: .top)
@@ -150,7 +150,7 @@ private struct TaskList: View {
                             .transition(.opacity)
                         }
                     }
-                    .reveal(appeared, delay: 0.1 + Double(min(index, 8)) * 0.035, offset: -8, blur: 3)
+                    .reveal(appeared, delay: 0.03 + Double(min(index, 8)) * 0.02, offset: -6, blur: 0)
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.92, anchor: .top).combined(with: .opacity).combined(with: .offset(y: -6)),
                         removal: .scale(scale: 0.9).combined(with: .opacity)
