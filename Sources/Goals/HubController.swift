@@ -4,6 +4,9 @@ import CoreGraphics
 /// Estado da interface do hub, compartilhado entre o AppDelegate e as views.
 @MainActor
 final class HubController: ObservableObject {
+    /// Calendário visível ao lado das tarefas (lembrado entre aberturas).
+    static let showCalendarKey = "showCalendar"
+
     @Published var isOpen = false
     @Published var today = Day.today
     @Published var selectedDay = Day.today
