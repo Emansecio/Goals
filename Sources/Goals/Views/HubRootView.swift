@@ -62,7 +62,7 @@ struct ExpandedView: View {
         ZStack {
             // A linha em U se desenha ao abrir e depois acompanha o progresso.
             ProgressOutline(
-                shape: ProgressU(top: 4, side: 12, bottom: 12, radius: 20),
+                shape: ProgressU(top: 4, side: 5, bottom: 5, radius: 25),
                 fraction: appeared ? fraction : 0,
                 lineWidth: 3,
                 glow: hub.glow
@@ -93,9 +93,9 @@ struct ExpandedView: View {
                     .frame(width: 250)
                     .reveal(appeared, delay: 0.04, blur: 0)
                 }
-                .padding(.horizontal, 26)
+                .padding(.horizontal, 19)
                 .padding(.top, 8)
-                .padding(.bottom, 26)
+                .padding(.bottom, 19)
             }
         }
         .foregroundStyle(.white)
@@ -174,7 +174,7 @@ private struct TopBar: View {
             OptionsMenu()
         }
         .monospacedDigit()
-        .padding(.horizontal, 26)
+        .padding(.horizontal, 21)
     }
 
     private func go(_ day: String) {
